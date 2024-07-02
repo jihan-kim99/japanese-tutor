@@ -5,20 +5,25 @@ import { Box, Button, Input, Typography } from "@mui/material";
 
 export default function Home() {
 
+
   const [input, setInput] = useState("");
+  const [answering, setAnswering] = useState(false);
   const output = useRef("");
   const history = useRef<string[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  const speechSynthesisAvailable = "speechSynthesis" in window;
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
   };
 
   const ask = async () => {
-    inputRef.current?.blur();
+    if (input === "") {
+      return;
+    }
     history.current = [...history.current, input];
     setInput("");
-    console.log(history);
+    setAnswering(true);
     const response = await fetch("/api/askAI", {
       method: "POST",
       headers: {
@@ -28,7 +33,33 @@ export default function Home() {
     });
     const data = await response.json();
     output.current = JSON.parse(data.text.message.content).response;
+    setAnswering(false);
+    speak(output.current);
     history.current = [...history.current, output.current];
+  };
+
+  const speak = (text: string) => {
+    if (!speechSynthesisAvailable) {
+      console.error("Speech synthesis not supported in this browser.");
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+  
+    // Get the list of available voices
+    const voices = window.speechSynthesis.getVoices();
+  
+    // Filter for voices in a specific language and optionally a preferred voice
+    const preferredVoice = voices.find(voice => voice.lang.startsWith('en') && voice.name.includes('Google'));
+  
+    if (preferredVoice) {
+      utterance.voice = preferredVoice; // Set the preferred voice
+    }
+  
+    utterance.pitch = 1; // Adjust pitch here
+    utterance.rate = 1; // Adjust rate here
+    utterance.volume = 1; // Adjust volume here
+  
+    window.speechSynthesis.speak(utterance);
   };
 
   useEffect(() => {
@@ -50,18 +81,15 @@ export default function Home() {
     >
       <Box
         sx={{
-          width: {
-            sm: "80%",
-            lg: "50%",
-          },
+          width: "50%",
           height: "60dvh",
           alignSelf: "center",
         }}
       >
-        <Typography variant="h3">English tutor</Typography>
-        <Typography variant="h6">This guy is prototype</Typography>
+        <Typography variant="h3">AskAI</Typography>
+        <Typography variant="h6">Ask a question and get an answer</Typography>
         <Typography variant="h6">
-          powered by OpenAI&apos;s GPT-3.5
+          AskAI is powered by OpenAI&apos;s GPT-3.5
         </Typography>
         <Box
           sx={{
@@ -75,19 +103,22 @@ export default function Home() {
             scrollbarWidth: "none",
           }}
         >
-          <Typography variant="h6">{output.current}</Typography>
+          {answering ? (
+            <Typography variant="h6">Thinking...</Typography>
+            ) : (
+            <Typography variant="h6">{output.current}</Typography>
+          )}
         </Box>
         <Box sx={{ mt: "60px", display: "flex", flexDirection: "column" }}>
           <Input
             placeholder="Ask a question"
             value={input}
             onChange={handleChange}
-            inputRef={inputRef}
-            onKeyDownCapture={(e) => {
+            onKeyDown={(e) => {
               if (e.key === "Enter") {
                 ask();
-              }}
-            }
+              }
+            }}
           />
         </Box>
         <Box sx={{ mt: "20px" }}>
@@ -100,7 +131,7 @@ export default function Home() {
             }}
             onClick={ask}
           >
-            send
+            Ask
           </Button>
         </Box>
       </Box>
