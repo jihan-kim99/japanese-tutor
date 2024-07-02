@@ -4,16 +4,20 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Box, Button, Input, Typography } from "@mui/material";
 
 export default function Home() {
+
   const [input, setInput] = useState("");
   const output = useRef("");
   const history = useRef<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
   };
 
   const ask = async () => {
+    inputRef.current?.blur();
     history.current = [...history.current, input];
+    setInput("");
     console.log(history);
     const response = await fetch("/api/askAI", {
       method: "POST",
@@ -24,7 +28,6 @@ export default function Home() {
     });
     const data = await response.json();
     output.current = JSON.parse(data.text.message.content).response;
-    setInput("");
     history.current = [...history.current, output.current];
   };
 
@@ -47,15 +50,18 @@ export default function Home() {
     >
       <Box
         sx={{
-          width: "50%",
+          width: {
+            sm: "80%",
+            lg: "50%",
+          },
           height: "60dvh",
           alignSelf: "center",
         }}
       >
-        <Typography variant="h3">AskAI</Typography>
-        <Typography variant="h6">Ask a question and get an answer</Typography>
+        <Typography variant="h3">English tutor</Typography>
+        <Typography variant="h6">This guy is prototype</Typography>
         <Typography variant="h6">
-          AskAI is powered by OpenAI&apos;s GPT-3.5
+          powered by OpenAI&apos;s GPT-3.5
         </Typography>
         <Box
           sx={{
@@ -76,11 +82,12 @@ export default function Home() {
             placeholder="Ask a question"
             value={input}
             onChange={handleChange}
-            onKeyDown={(e) => {
+            inputRef={inputRef}
+            onKeyDownCapture={(e) => {
               if (e.key === "Enter") {
                 ask();
-              }
-            }}
+              }}
+            }
           />
         </Box>
         <Box sx={{ mt: "20px" }}>
@@ -93,7 +100,7 @@ export default function Home() {
             }}
             onClick={ask}
           >
-            Ask
+            send
           </Button>
         </Box>
       </Box>
