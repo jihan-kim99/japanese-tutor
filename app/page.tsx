@@ -85,7 +85,10 @@ export default function Home() {
     >
       <Box
         sx={{
-          width: "50%",
+          width: {
+            sm: "80%",
+            lg: "50%",
+          },
           height: "60dvh",
           alignSelf: "center",
         }}
