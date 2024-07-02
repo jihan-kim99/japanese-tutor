@@ -11,8 +11,12 @@ export default function Home() {
   const output = useRef("");
   const history = useRef<string[]>([]);
 
-  const speechSynthesisAvailable = "speechSynthesis" in window;
+  const [speechSynthesisAvailable, setSpeechSynthesisAvailable] = useState(false);
 
+  useEffect(() => {
+    setSpeechSynthesisAvailable("speechSynthesis" in window);
+  }, []);
+  
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
   };
